@@ -355,8 +355,8 @@ function wire(){
 
     const c1=document.getElementById('cIn1'), c2=document.getElementById('cIn2');
     const factor=()=>convMode==='length'?1.60934:0.453592;
-    c1.oninput=()=>{c2.value = c1.value===''? '' : (Number(c1.value)*factor()).toFixed(3);};
-    c2.oninput=()=>{c1.value = c2.value===''? '' : (Number(c2.value)/factor()).toFixed(3);};
+    c1.oninput=()=>{c2.value = c1.value===''? '' : (Number(c1.value)/factor()).toFixed(3);};
+    c2.oninput=()=>{c1.value = c2.value===''? '' : (Number(c2.value)*factor()).toFixed(3);};
     document.getElementById('convLen').onclick=()=>{convMode='length';render();};
     document.getElementById('convWt').onclick=()=>{convMode='weight';render();};
 
