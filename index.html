@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PaisaCalc</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="theme-color" content="#1f7a4d">
+<style>
+:root{
+  --bg:#f6f7f5; --card:#ffffff; --ink:#16261e; --sub:#5b6b62; --line:#e3e7e2;
+  --accent:#1f7a4d; --accent2:#e8f4ec; --danger:#b3432d; --radius:14px;
+  box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){--bg:#101512;--card:#171d19;--ink:#eef2ef;--sub:#9db0a5;--line:#263129;--accent:#4fbf85;--accent2:#1a2b21;}
+}
+:root[data-theme="dark"]{--bg:#101512;--card:#171d19;--ink:#eef2ef;--sub:#9db0a5;--line:#263129;--accent:#4fbf85;--accent2:#1a2b21;}
+*{box-sizing:border-box;}
+html,body{height:100%;}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,Segoe UI,Roboto,sans-serif;}
+header{position:sticky;top:0;padding:14px 16px calc(10px + env(safe-area-inset-top,0px));background:var(--bg);border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:8px;z-index:5;}
+header h1{font-size:1.05rem;margin:0;}
+select{background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:6px 8px;font-size:.85rem;}
+nav{display:flex;gap:6px;padding:10px 12px;overflow-x:auto;}
+nav button{flex:0 0 auto;padding:8px 14px;border-radius:20px;border:1px solid var(--line);background:var(--card);color:var(--ink);font-size:.85rem;}
+nav button.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+main{padding:10px 16px 40px;max-width:520px;margin:0 auto;}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin-bottom:14px;}
+.card h2{font-size:.95rem;margin:0 0 12px;color:var(--sub);text-transform:uppercase;letter-spacing:.03em;}
+label{display:block;font-size:.85rem;color:var(--sub);margin:10px 0 4px;}
+input,select.full{width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);font-size:1rem;}
+.row{display:flex;gap:10px;}
+.row > *{flex:1;}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px;}
+.keys button{padding:16px 0;font-size:1.1rem;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);}
+.keys button.op{background:var(--accent2);color:var(--accent);}
+.keys button.eq{background:var(--accent);color:#fff;grid-column:span 2;}
+.display{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:14px;text-align:right;font-size:1.6rem;margin-bottom:6px;word-break:break-all;min-height:40px;}
+.small{font-size:.8rem;color:var(--sub);text-align:right;}
+.result{margin-top:14px;padding:14px;border-radius:10px;background:var(--accent2);color:var(--accent);font-weight:600;}
+.toggle{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-top:8px;}
+.toggle button{flex:1;padding:8px;border:none;background:var(--card);color:var(--ink);}
+.toggle button.active{background:var(--accent);color:#fff;}
+.list-item{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--line);font-size:.9rem;}
+.list-item button{border:none;background:none;color:var(--danger);font-size:.85rem;}
+.addrow{display:flex;gap:8px;margin-top:10px;}
+.addrow input{flex:1;}
+.addrow button{padding:0 14px;border-radius:10px;border:none;background:var(--accent);color:#fff;}
+.summary{display:flex;justify-content:space-between;padding-top:10px;margin-top:8px;border-top:1px dashed var(--line);font-weight:600;}
+.muted{color:var(--sub);font-size:.8rem;margin-top:6px;}
+</style>
+</head>
+<body>
+<header>
+  <h1 id="appTitle">PaisaCalc</h1>
+  <select id="langSel"></select>
+</header>
+<nav id="tabs"></nav>
+<main id="main"></main>
+
+<script>
+const I18N = {
+en:{title:"PaisaCalc",tabs:["Calculator","Budget","Savings","Interest","More Tools"],
+ calc:"Calculator", clear:"Clear",
+ realtools:"Quick Tools", percentOf:"% of a number", discount:"Discount price", gst:"GST amount",
+ amount:"Amount", percent:"Percent", price:"Price", rate:"Rate %", result:"Result",
+ salary:"Monthly Salary / Income", addExpense:"Add expense", category:"Category", value:"Amount",
+ totalExpense:"Total Expenses", remaining:"Remaining / Savings this month",
+ savGoal:"Savings Goal", savCurrent:"Saved So Far", savMonthly:"Saved per Month", savTime:"Months to reach goal",
+ principal:"Principal (₹)", years:"Time (years)", simple:"Simple", compound:"Compound",
+ freq:"Compounding per year", maturity:"Maturity Amount", interestEarned:"Interest Earned",
+ emi:"EMI Calculator", loanAmount:"Loan Amount (₹)", tenureMonths:"Tenure (months)",
+ monthlyEMI:"Monthly EMI", totalInterest:"Total Interest", totalPayment:"Total Payment",
+ unitConv:"Unit Converter", length:"Length", weight:"Weight", km:"Kilometers", mi:"Miles", kg:"Kilograms", lb:"Pounds",
+ ageCalc:"Age Calculator", dob:"Date of Birth", yearsOld:"years", monthsOld:"months", daysOld:"days",
+ tip:"Tip Calculator", billAmt:"Bill Amount", tipPct:"Tip %", perPerson:"People to split", tipAmt:"Tip Amount", totalWithTip:"Total (with tip)", perHead:"Per Person",
+ note:"Data is stored only on this device."
+},
+hi:{title:"पैसाकैलक", tabs:["कैलकुलेटर","बजट","बचत","ब्याज","और उपकरण"],
+ calc:"कैलकुलेटर", clear:"साफ़ करें",
+ realtools:"त्वरित उपकरण", percentOf:"% ज्ञात करें", discount:"छूट के बाद कीमत", gst:"जीएसटी राशि",
+ amount:"राशि", percent:"प्रतिशत", price:"कीमत", rate:"दर %", result:"परिणाम",
+ salary:"मासिक वेतन / आय", addExpense:"खर्च जोड़ें", category:"श्रेणी", value:"राशि",
+ totalExpense:"कुल खर्च", remaining:"शेष / इस महीने की बचत",
+ savGoal:"बचत लक्ष्य", savCurrent:"अब तक बचाया", savMonthly:"प्रति माह बचत", savTime:"लक्ष्य तक महीने",
+ principal:"मूलधन (₹)", years:"समय (वर्ष)", simple:"साधारण", compound:"चक्रवृद्धि",
+ freq:"प्रति वर्ष चक्रवृद्धि", maturity:"परिपक्वता राशि", interestEarned:"अर्जित ब्याज",
+ emi:"ईएमआई कैलकुलेटर", loanAmount:"ऋण राशि (₹)", tenureMonths:"अवधि (महीने)",
+ monthlyEMI:"मासिक ईएमआई", totalInterest:"कुल ब्याज", totalPayment:"कुल भुगतान",
+ unitConv:"इकाई परिवर्तक", length:"लंबाई", weight:"वज़न", km:"किलोमीटर", mi:"मील", kg:"किलोग्राम", lb:"पाउंड",
+ ageCalc:"आयु कैलकुलेटर", dob:"जन्म तिथि", yearsOld:"वर्ष", monthsOld:"महीने", daysOld:"दिन",
+ tip:"टिप कैलकुलेटर", billAmt:"बिल राशि", tipPct:"टिप %", perPerson:"लोगों की संख्या", tipAmt:"टिप राशि", totalWithTip:"कुल (टिप सहित)", perHead:"प्रति व्यक्ति",
+ note:"डेटा केवल इस डिवाइस पर सहेजा गया है।"
+},
+mr:{title:"पैसाकॅलक", tabs:["कॅल्क्युलेटर","बजेट","बचत","व्याज","अधिक साधने"],
+ calc:"कॅल्क्युलेटर", clear:"साफ करा",
+ realtools:"जलद साधने", percentOf:"% काढा", discount:"सवलतीनंतर किंमत", gst:"जीएसटी रक्कम",
+ amount:"रक्कम", percent:"टक्केवारी", price:"किंमत", rate:"दर %", result:"निकाल",
+ salary:"मासिक पगार / उत्पन्न", addExpense:"खर्च जोडा", category:"प्रकार", value:"रक्कम",
+ totalExpense:"एकूण खर्च", remaining:"शिल्लक / या महिन्याची बचत",
+ savGoal:"बचत ध्येय", savCurrent:"आतापर्यंत बचत", savMonthly:"दरमहा बचत", savTime:"ध्येयासाठी महिने",
+ principal:"मुद्दल (₹)", years:"कालावधी (वर्षे)", simple:"साधे", compound:"चक्रवाढ",
+ freq:"वार्षिक चक्रवाढ वेळा", maturity:"परिपक्वता रक्कम", interestEarned:"मिळालेले व्याज",
+ emi:"ईएमआय कॅल्क्युलेटर", loanAmount:"कर्ज रक्कम (₹)", tenureMonths:"कालावधी (महिने)",
+ monthlyEMI:"मासिक ईएमआय", totalInterest:"एकूण व्याज", totalPayment:"एकूण देयक",
+ unitConv:"एकक परिवर्तक", length:"लांबी", weight:"वजन", km:"किलोमीटर", mi:"मैल", kg:"किलोग्रॅम", lb:"पौंड",
+ ageCalc:"वय कॅल्क्युलेटर", dob:"जन्मतारीख", yearsOld:"वर्षे", monthsOld:"महिने", daysOld:"दिवस",
+ tip:"टिप कॅल्क्युलेटर", billAmt:"बिल रक्कम", tipPct:"टिप %", perPerson:"व्यक्तींची संख्या", tipAmt:"टिप रक्कम", totalWithTip:"एकूण (टिपसह)", perHead:"प्रति व्यक्ती",
+ note:"डेटा फक्त या डिव्हाइसवर साठवला आहे."
+},
+gu:{title:"પૈસાકૅલ્ક", tabs:["કેલ્ક્યુલેટર","બજેટ","બચત","વ્યાજ","વધુ સાધનો"],
+ calc:"કેલ્ક્યુલેટર", clear:"સાફ કરો",
+ realtools:"ઝડપી સાધનો", percentOf:"% કાઢો", discount:"ડિસ્કાઉન્ટ પછી કિંમત", gst:"જીએસટી રકમ",
+ amount:"રકમ", percent:"ટકા", price:"કિંમત", rate:"દર %", result:"પરિણામ",
+ salary:"માસિક પગાર / આવક", addExpense:"ખર્ચ ઉમેરો", category:"શ્રેણી", value:"રકમ",
+ totalExpense:"કુલ ખર્ચ", remaining:"બાકી / આ મહિનાની બચત",
+ savGoal:"બચત લક્ષ્ય", savCurrent:"અત્યાર સુધી બચત", savMonthly:"માસિક બચત", savTime:"લક્ષ્ય સુધી મહિના",
+ principal:"મુદ્દલ (₹)", years:"સમય (વર્ષ)", simple:"સાદું", compound:"ચક્રવૃદ્ધિ",
+ freq:"વર્ષે ચક્રવૃદ્ધિ વખત", maturity:"પરિપક્વતા રકમ", interestEarned:"મળેલ વ્યાજ",
+ emi:"ઇએમઆઈ કેલ્ક્યુલેટર", loanAmount:"લોન રકમ (₹)", tenureMonths:"ગાળો (મહિના)",
+ monthlyEMI:"માસિક ઇએમઆઈ", totalInterest:"કુલ વ્યાજ", totalPayment:"કુલ ચુકવણી",
+ unitConv:"એકમ પરિવર્તક", length:"લંબાઈ", weight:"વજન", km:"કિલોમીટર", mi:"માઇલ", kg:"કિલોગ્રામ", lb:"પાઉન્ડ",
+ ageCalc:"ઉંમર કેલ્ક્યુલેટર", dob:"જન્મ તારીખ", yearsOld:"વર્ષ", monthsOld:"મહિના", daysOld:"દિવસ",
+ tip:"ટિપ કેલ્ક્યુલેટર", billAmt:"બિલ રકમ", tipPct:"ટિપ %", perPerson:"વ્યક્તિઓની સંખ્યા", tipAmt:"ટિપ રકમ", totalWithTip:"કુલ (ટિપ સાથે)", perHead:"વ્યક્તિ દીઠ",
+ note:"ડેટા ફક્ત આ ડિવાઇસ પર સંગ્રહાયેલ છે."
+}};
+
+let lang='en', tab=0;
+const langSel=document.getElementById('langSel');
+['en','hi','mr','gu'].forEach(l=>{const o=document.createElement('option');o.value=l;o.textContent={en:'English',hi:'हिन्दी',mr:'मराठी',gu:'ગુજરાતી'}[l];langSel.appendChild(o);});
+langSel.onchange=e=>{lang=e.target.value;render();};
+
+function t(k){return I18N[lang][k];}
+
+// ---- state ----
+let calcExpr='';
+let expenses=JSON.parse(safeGet('pc_expenses')||'[]');
+let budgetState=JSON.parse(safeGet('pc_budget')||'{"salary":""}');
+let savState=JSON.parse(safeGet('pc_savings')||'{"goal":"","current":"","monthly":""}');
+
+function safeGet(k){try{return localStorage.getItem(k);}catch(e){return null;}}
+function safeSet(k,v){try{localStorage.setItem(k,v);}catch(e){}}
+
+function renderTabs(){
+  const nav=document.getElementById('tabs');
+  nav.innerHTML='';
+  t('title'); document.getElementById('appTitle').textContent=I18N[lang].title;
+  I18N[lang].tabs.forEach((label,i)=>{
+    const b=document.createElement('button');
+    b.textContent=label; if(i===tab)b.className='active';
+    b.onclick=()=>{tab=i;render();};
+    nav.appendChild(b);
+  });
+}
+
+function render(){
+  renderTabs();
+  const m=document.getElementById('main');
+  if(tab===0) m.innerHTML=calcView();
+  if(tab===1) m.innerHTML=budgetView();
+  if(tab===2) m.innerHTML=savingsView();
+  if(tab===3) m.innerHTML=interestView();
+  if(tab===4) m.innerHTML=moreView();
+  wire();
+}
+
+// ---- Calculator ----
+function calcView(){
+  return `
+  <div class="card">
+    <h2>${t('calc')}</h2>
+    <div class="display" id="disp">${calcExpr||'0'}</div>
+    <div class="grid4 keys">
+      ${['7','8','9','/','4','5','6','*','1','2','3','-','0','.','C','+'].map(k=>
+        `<button data-k="${k}" class="${'/*-+'.includes(k)?'op':''}">${k==='*'? '×': k==='/'?'÷':k}</button>`).join('')}
+      <button data-k="=" class="eq">=</button>
+    </div>
+  </div>
+  <div class="card">
+    <h2>${t('realtools')}</h2>
+    <label>${t('percentOf')}</label>
+    <div class="row"><input id="p1" type="number" placeholder="${t('percent')} %"><input id="p2" type="number" placeholder="${t('amount')}"></div>
+    <div class="result" id="pRes">${t('result')}: —</div>
+    <label style="margin-top:16px">${t('discount')}</label>
+    <div class="row"><input id="d1" type="number" placeholder="${t('price')}"><input id="d2" type="number" placeholder="${t('percent')} %"></div>
+    <div class="result" id="dRes">${t('result')}: —</div>
+    <label style="margin-top:16px">${t('gst')}</label>
+    <div class="row"><input id="g1" type="number" placeholder="${t('price')}"><input id="g2" type="number" placeholder="${t('rate')}" value="18"></div>
+    <div class="result" id="gRes">${t('result')}: —</div>
+  </div>`;
+}
+
+// ---- Budget ----
+function budgetView(){
+  const total=expenses.reduce((s,e)=>s+Number(e.v||0),0);
+  const salary=Number(budgetState.salary||0);
+  return `
+  <div class="card">
+    <h2>${t('salary')}</h2>
+    <input id="salaryIn" type="number" placeholder="₹" value="${budgetState.salary||''}">
+  </div>
+  <div class="card">
+    <h2>${t('addExpense')}</h2>
+    <div class="addrow">
+      <input id="catIn" placeholder="${t('category')}">
+      <input id="valIn" type="number" placeholder="${t('value')}">
+      <button id="addExp">+</button>
+    </div>
+    ${expenses.map((e,i)=>`<div class="list-item"><span>${e.c}</span><span>₹${e.v} <button data-i="${i}" class="delExp">✕</button></span></div>`).join('')}
+    <div class="summary"><span>${t('totalExpense')}</span><span>₹${total.toFixed(2)}</span></div>
+    <div class="summary"><span>${t('remaining')}</span><span>₹${(salary-total).toFixed(2)}</span></div>
+  </div>
+  <div class="muted">${t('note')}</div>`;
+}
+
+// ---- Savings ----
+function savingsView(){
+  const goal=Number(savState.goal||0), cur=Number(savState.current||0), mo=Number(savState.monthly||0);
+  const remain=goal-cur;
+  const months = mo>0 ? Math.max(0,Math.ceil(remain/mo)) : null;
+  return `
+  <div class="card">
+    <h2 id="stitle">${I18N[lang].tabs[2]}</h2>
+    <label>${t('savGoal')}</label><input id="sGoal" type="number" value="${savState.goal||''}">
+    <label>${t('savCurrent')}</label><input id="sCur" type="number" value="${savState.current||''}">
+    <label>${t('savMonthly')}</label><input id="sMo" type="number" value="${savState.monthly||''}">
+    <div class="result">${t('savTime')}: ${months===null?'—':months}</div>
+  </div>
+  <div class="muted">${t('note')}</div>`;
+}
+
+// ---- Interest ----
+let interestMode='simple';
+function interestView(){
+  return `
+  <div class="card">
+    <h2>${I18N[lang].tabs[3]}</h2>
+    <div class="toggle">
+      <button id="modeSimple" class="${interestMode==='simple'?'active':''}">${t('simple')}</button>
+      <button id="modeComp" class="${interestMode==='compound'?'active':''}">${t('compound')}</button>
+    </div>
+    <label>${t('principal')}</label><input id="iP" type="number">
+    <label>${t('rate')}</label><input id="iR" type="number">
+    <label>${t('years')}</label><input id="iY" type="number">
+    ${interestMode==='compound'?`<label>${t('freq')}</label><input id="iN" type="number" value="1">`:''}
+    <div class="result" id="iRes">${t('maturity')}: — &nbsp;|&nbsp; ${t('interestEarned')}: —</div>
+  </div>`;
+}
+
+function calcInterest(){
+  const P=Number(document.getElementById('iP').value||0);
+  const R=Number(document.getElementById('iR').value||0);
+  const Y=Number(document.getElementById('iY').value||0);
+  let maturity, interest;
+  if(interestMode==='simple'){
+    interest=(P*R*Y)/100; maturity=P+interest;
+  }else{
+    const n=Number(document.getElementById('iN').value||1);
+    maturity=P*Math.pow(1+(R/100)/n, n*Y); interest=maturity-P;
+  }
+  document.getElementById('iRes').textContent=`${t('maturity')}: ₹${maturity.toFixed(2)} | ${t('interestEarned')}: ₹${interest.toFixed(2)}`;
+}
+
+// ---- More Tools: EMI, Unit Converter, Age, Tip ----
+let convMode='length';
+function moreView(){
+  return `
+  <div class="card">
+    <h2>${t('emi')}</h2>
+    <label>${t('loanAmount')}</label><input id="eP" type="number">
+    <label>${t('rate')}</label><input id="eR" type="number">
+    <label>${t('tenureMonths')}</label><input id="eN" type="number">
+    <div class="result" id="eRes">${t('monthlyEMI')}: —</div>
+  </div>
+  <div class="card">
+    <h2>${t('tip')}</h2>
+    <label>${t('billAmt')}</label><input id="tB" type="number">
+    <div class="row">
+      <div><label>${t('tipPct')}</label><input id="tP" type="number" value="10"></div>
+      <div><label>${t('perPerson')}</label><input id="tS" type="number" value="1"></div>
+    </div>
+    <div class="result" id="tRes">${t('tipAmt')}: —</div>
+  </div>
+  <div class="card">
+    <h2>${t('unitConv')}</h2>
+    <div class="toggle">
+      <button id="convLen" class="${convMode==='length'?'active':''}">${t('length')}</button>
+      <button id="convWt" class="${convMode==='weight'?'active':''}">${t('weight')}</button>
+    </div>
+    <label id="convLabel1">${convMode==='length'?t('km'):t('kg')}</label>
+    <input id="cIn1" type="number">
+    <label id="convLabel2">${convMode==='length'?t('mi'):t('lb')}</label>
+    <input id="cIn2" type="number">
+  </div>
+  <div class="card">
+    <h2>${t('ageCalc')}</h2>
+    <label>${t('dob')}</label><input id="aDob" type="date">
+    <div class="result" id="aRes">—</div>
+  </div>`;
+}
+
+function wire(){
+  if(tab===0){
+    document.querySelectorAll('.keys button').forEach(b=>b.onclick=()=>{
+      const k=b.dataset.k;
+      if(k==='C'){calcExpr='';}
+      else if(k==='='){ try{calcExpr=String(Function('"use strict";return('+calcExpr.replace(/×/g,'*').replace(/÷/g,'/')+')')());}catch(e){calcExpr='Err';} }
+      else calcExpr+=k;
+      document.getElementById('disp').textContent=calcExpr||'0';
+    });
+    const upd=(ids,fn)=>ids.forEach(id=>document.getElementById(id).oninput=fn);
+    upd(['p1','p2'],()=>{const a=Number(document.getElementById('p1').value||0),b=Number(document.getElementById('p2').value||0);document.getElementById('pRes').textContent=`${t('result')}: ${(a/100*b).toFixed(2)}`;});
+    upd(['d1','d2'],()=>{const a=Number(document.getElementById('d1').value||0),b=Number(document.getElementById('d2').value||0);document.getElementById('dRes').textContent=`${t('result')}: ₹${(a-(a*b/100)).toFixed(2)}`;});
+    upd(['g1','g2'],()=>{const a=Number(document.getElementById('g1').value||0),b=Number(document.getElementById('g2').value||18);document.getElementById('gRes').textContent=`${t('result')}: ₹${(a*b/100).toFixed(2)}`;});
+  }
+  if(tab===1){
+    document.getElementById('salaryIn').oninput=e=>{budgetState.salary=e.target.value;safeSet('pc_budget',JSON.stringify(budgetState));render();};
+    document.getElementById('addExp').onclick=()=>{
+      const c=document.getElementById('catIn').value||'—', v=document.getElementById('valIn').value||0;
+      expenses.push({c,v}); safeSet('pc_expenses',JSON.stringify(expenses)); render();
+    };
+    document.querySelectorAll('.delExp').forEach(b=>b.onclick=()=>{expenses.splice(Number(b.dataset.i),1);safeSet('pc_expenses',JSON.stringify(expenses));render();});
+  }
+  if(tab===2){
+    const save=()=>safeSet('pc_savings',JSON.stringify(savState));
+    document.getElementById('sGoal').oninput=e=>{savState.goal=e.target.value;save();render();};
+    document.getElementById('sCur').oninput=e=>{savState.current=e.target.value;save();render();};
+    document.getElementById('sMo').oninput=e=>{savState.monthly=e.target.value;save();render();};
+  }
+  if(tab===3){
+    document.getElementById('modeSimple').onclick=()=>{interestMode='simple';render();};
+    document.getElementById('modeComp').onclick=()=>{interestMode='compound';render();};
+    ['iP','iR','iY','iN'].forEach(id=>{const el=document.getElementById(id); if(el) el.oninput=calcInterest;});
+  }
+  if(tab===4){
+    const calcEmi=()=>{
+      const P=Number(document.getElementById('eP').value||0), R=Number(document.getElementById('eR').value||0)/12/100, N=Number(document.getElementById('eN').value||0);
+      if(P>0 && R>0 && N>0){
+        const emi=P*R*Math.pow(1+R,N)/(Math.pow(1+R,N)-1);
+        const total=emi*N, interest=total-P;
+        document.getElementById('eRes').textContent=`${t('monthlyEMI')}: ₹${emi.toFixed(2)} | ${t('totalInterest')}: ₹${interest.toFixed(2)} | ${t('totalPayment')}: ₹${total.toFixed(2)}`;
+      } else document.getElementById('eRes').textContent=`${t('monthlyEMI')}: —`;
+    };
+    ['eP','eR','eN'].forEach(id=>document.getElementById(id).oninput=calcEmi);
+
+    const calcTip=()=>{
+      const b=Number(document.getElementById('tB').value||0), p=Number(document.getElementById('tP').value||0), s=Number(document.getElementById('tS').value||1)||1;
+      const tip=b*p/100, total=b+tip;
+      document.getElementById('tRes').textContent=`${t('tipAmt')}: ₹${tip.toFixed(2)} | ${t('totalWithTip')}: ₹${total.toFixed(2)} | ${t('perHead')}: ₹${(total/s).toFixed(2)}`;
+    };
+    ['tB','tP','tS'].forEach(id=>document.getElementById(id).oninput=calcTip);
+
+    const c1=document.getElementById('cIn1'), c2=document.getElementById('cIn2');
+    const factor=()=>convMode==='length'?1.60934:0.453592;
+    c1.oninput=()=>{c2.value = c1.value===''? '' : (Number(c1.value)*factor()).toFixed(3);};
+    c2.oninput=()=>{c1.value = c2.value===''? '' : (Number(c2.value)/factor()).toFixed(3);};
+    document.getElementById('convLen').onclick=()=>{convMode='length';render();};
+    document.getElementById('convWt').onclick=()=>{convMode='weight';render();};
+
+    document.getElementById('aDob').onchange=e=>{
+      const d=new Date(e.target.value); const now=new Date();
+      if(isNaN(d)) return;
+      let y=now.getFullYear()-d.getFullYear(), m=now.getMonth()-d.getMonth(), da=now.getDate()-d.getDate();
+      if(da<0){m--; da+=new Date(now.getFullYear(),now.getMonth(),0).getDate();}
+      if(m<0){y--; m+=12;}
+      document.getElementById('aRes').textContent=`${y} ${t('yearsOld')}, ${m} ${t('monthsOld')}, ${da} ${t('daysOld')}`;
+    };
+  }
+}
+render();
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  });
+}
+</script>
+</body>
+</html>

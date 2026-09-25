@@ -1,0 +1,17 @@
+{
+  "name": "PaisaCalc - Money & Math Helper",
+  "short_name": "PaisaCalc",
+  "description": "Basic calculator, budget & salary tracker, savings planner, EMI, interest, tip and unit converter tools in English, Hindi, Marathi and Gujarati.",
+  "start_url": "./index.html",
+  "id": "./index.html",
+  "display": "standalone",
+  "background_color": "#f6f7f5",
+  "theme_color": "#1f7a4d",
+  "orientation": "portrait",
+  "categories": ["finance", "education", "utilities"],
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
